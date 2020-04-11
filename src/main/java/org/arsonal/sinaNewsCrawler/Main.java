@@ -66,7 +66,7 @@ public class Main {
         } else {
             for (Element article : articles) {
                 // TODO
-                System.out.println(article.text());
+//                System.out.println(article.text());
             }
         }
     }
