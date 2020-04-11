@@ -13,7 +13,7 @@ public class Main {
     public static void main(String[] args) throws IOException {
         CloseableHttpClient httpclient = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet("https://:sina.cn/");
-
+        // add some comments
         try (CloseableHttpResponse response = httpclient.execute(httpGet)) {
             System.out.println(response.getStatusLine());
             HttpEntity entity1 = response.getEntity();
