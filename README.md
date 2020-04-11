@@ -1,2 +1,1 @@
-# sinaNews-crawler
-crawler practise
+# 爬虫多线程练习
