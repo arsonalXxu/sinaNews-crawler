@@ -98,8 +98,8 @@ public class Main {
 
         String url = null;
         try {
-            url = new String(str.trim().replace(" ", "%20")
-                    .replace("|", "%7C"));
+            url = str.trim().replace(" ", "%20")
+                    .replace("|", "%7C");
         } catch (Exception e) {
             e.printStackTrace();
         }
