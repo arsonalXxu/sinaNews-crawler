@@ -18,8 +18,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.stream.Collectors;
 
 public class Main {
     // 从数据库加载即将要处理的链接的代码
@@ -33,19 +32,12 @@ public class Main {
 
         Connection connection = DriverManager.getConnection(url, USER, PASSWORD);
 
+        String currentLink;
         // 循环处理连接池
-        while (true) {
-            List<String> linkPool = loadUrlFromDataBase(connection, "select * from LINKS_TO_BE_PROCESSED");
-            if (linkPool.isEmpty()) {
-                break;
-            }
-            // ArrayLis从尾部删除更有效率
-            String currentLink = linkPool.remove(linkPool.size() - 1);
-            deleteLinkFromDataBase(connection, currentLink, "delete from LINKS_TO_BE_PROCESSED where LINK = ?");
+        while ((currentLink = getNextLinkThenDelete(connection, "select * from LINKS_TO_BE_PROCESSED limit 1")) != null) {
             if (isLinkProcessed(connection, currentLink)) {
                 continue;
             }
-
             if (isInterestedLink(currentLink)) {
 
                 currentLink = convertURL(currentLink);
@@ -57,8 +49,6 @@ public class Main {
                 parseUrlIfItNewsInsertIntoDataBase(connection, links);
 
                 storeIntoDBIfItIsNewsPage(currentLink, doc, connection);
-            } else {
-                insertLinkIntoDataBase(connection, currentLink, "insert into LINKS_ALREADY_PROCESSED(LINK) values ( ? )");
             }
         }
 
@@ -101,16 +91,23 @@ public class Main {
         }
     }
 
-    private static List<String> loadUrlFromDataBase(Connection connection, String sql) throws SQLException {
-        List<String> list = new ArrayList<>();
+    private static String getNextLinkFromDataBase(Connection connection, String sql) throws SQLException {
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql);
              ResultSet resultSet = preparedStatement.executeQuery()) {
 
             while (resultSet.next()) {
-                list.add(resultSet.getString(1));
+                return resultSet.getString(1);
             }
         }
-        return list;
+        return null;
+    }
+
+    private static String getNextLinkThenDelete(Connection connection, String sql) throws SQLException {
+        String link = getNextLinkFromDataBase(connection, sql);
+        if (link != null) {
+            deleteLinkFromDataBase(connection, link, "delete from LINKS_TO_BE_PROCESSED where LINK = ?");
+        }
+        return link;
     }
 
     private static void storeIntoDBIfItIsNewsPage(String currentLink, Document doc, Connection connection) throws SQLException {
@@ -121,7 +118,16 @@ public class Main {
             for (Element article : articles) {
                 // TODO
                 System.out.println(article.getElementsByTag("h1").text());
+                String title = article.getElementsByTag("h1").text();
+                String content = article.getElementsByTag("p").stream().filter((element) -> element.select("art_p") != null)
+                        .map(Element::text).collect(Collectors.joining("\n"));
 
+                try (PreparedStatement statement = connection.prepareStatement("insert into NEWS(title, content, url, create_at, modified_at) VALUES ( ?,?,?,now(),now())")) {
+                    statement.setString(1, title);
+                    statement.setString(2, content);
+                    statement.setString(3, currentLink);
+                    statement.executeUpdate();
+                }
             }
         }
         insertLinkIntoDataBase(connection, currentLink, "insert into LINKS_ALREADY_PROCESSED(LINK) values ( ? )");
