@@ -3,9 +3,9 @@ create table NEWS(
     title text,
     content text,
     url varchar(1000),
-    create_at timestamp,
-    modified_at timestamp
-);
+    create_at timestamp default now(),
+    modified_at timestamp default now()
+) default CHARACTER SET utf8mb4;
 
 create table LINKS_TO_BE_PROCESSED(
     link varchar(1000)

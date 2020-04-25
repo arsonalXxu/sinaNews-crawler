@@ -5,6 +5,12 @@ public class News {
     private String content;
     private String url;
 
+    public News(String title, String content, String url) {
+        this.title = title;
+        this.content = content;
+        this.url = url;
+    }
+
     public String getTitle() {
         return title;
     }
