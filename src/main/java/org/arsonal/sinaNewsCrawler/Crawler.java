@@ -16,7 +16,7 @@ import java.sql.SQLException;
 import java.util.stream.Collectors;
 
 public class Crawler extends Thread {
-    private CrawlerDao dao ;
+    private CrawlerDao dao;
 
     public Crawler(CrawlerDao dao) {
         this.dao = dao;
